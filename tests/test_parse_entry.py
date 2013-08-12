@@ -79,3 +79,11 @@ def test_hourly():
 def test_mistakes():
     assert_raises(tab.CronTabError, tab.parse_entry, '@hourly')
     assert_raises(tab.CronTabError, tab.parse_entry, '* * * * cmd')
+
+def test_python_commands():
+    cmd = lambda: None
+    entry = tab.parse_entry('* * * * *', cmd)
+    assert entry.command == cmd
+    assert_raises(tab.CronTabError, tab.parse_entry, '* * * * *')
+    assert_raises(tab.CronTabError, tab.parse_entry, '* * * * * cmd', cmd)
+

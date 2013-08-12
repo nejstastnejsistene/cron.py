@@ -37,12 +37,12 @@ class CronTab(object):
 
 class CronTabEntry(object):
 
-    def __init__(self, entry, fields, command, **kwargs):
+    def __init__(self, entry, fields, command, **flags):
         self.entry = entry
         self.fields = fields
         self.command = command
-        self.dom_or_dow_star = kwargs.get('dom_or_dow_star', False)
-        self.when_reboot = kwargs.get('when_reboot', False)
+        self.dom_or_dow_star = flags.get('dom_or_dow_star', False)
+        self.when_reboot = flags.get('when_reboot', False)
 
     def iter_field(self, field):
         '''Iterate through the matching values for a field.'''
@@ -106,14 +106,18 @@ class CronTabEntry(object):
             year += 1              
 
 
-def parse_entry(entry):
+def parse_entry(entry, command=None, *args, **kwargs):
     '''Parse a single crontab entry.'''
+
+    if command is None and (args or kwargs):
+        raise TypeError('arguments were provided, but no command')
 
     entry = entry.strip()
 
     # Reboot is a special case.
     if entry.lower().startswith('@reboot'):
-        command = entry[7:].lstrip()
+        cmd = entry[7:].lstrip()
+        command = get_command(entry[7:], command)
         return CronTabEntry(entry, None, command, when_reboot=True)
 
     # Replace predefined time specifiers.
@@ -127,30 +131,48 @@ def parse_entry(entry):
             raise CronTabError(mesg)
 
     fields = []
-    command = entry[::]
-    kwargs = {}
+    cmd = str(entry)
+    flags = {}
 
     # Parse the fields.
     for expr, field in zip(entry.split(), FIELDS):
-        command = command[len(expr):].lstrip()
+        cmd = cmd[len(expr):].lstrip()
         try:
-            bits = parse_field(expr.lower(), field, kwargs)
+            bits = parse_field(expr.lower(), field, flags)
             fields.append(bits)
         except ValueError:
             mesg = 'error parsing field: {!r}'.format(expr)
             raise CronTabError(mesg)
 
-    # The command is whatever is left.
-    command = command.strip()
+    command = get_command(cmd, command)
 
-    if len(fields) < len(FIELDS) or not command:
+    if len(fields) < len(FIELDS):
         mesg = 'error parsing entry {!r}'.format(entry)
         raise CronTabError(mesg)
 
-    return CronTabEntry(entry, fields, command, **kwargs)
+    return CronTabEntry(entry, fields, command, **flags)
 
 
-def parse_field(expr, field, kwargs={}):
+def get_command(cmd, func):
+    '''Determine an entry's command.
+
+       Arguments are a the remainder of an entry, and an optional
+       python function.
+    '''
+    cmd = cmd.strip()
+
+    if cmd and func is None:
+        return cmd
+    elif not cmd and func is not None:
+        return func
+
+    if cmd:
+        raise CronTabError('found command where none was expected')
+    else:
+        raise CronTabError('expecting a command')
+
+
+def parse_field(expr, field, flags={}):
     '''Parse a field from a crontab entry.'''
 
     if not expr:
@@ -184,7 +206,7 @@ def parse_field(expr, field, kwargs={}):
         if val == '*':
             # Set the DOM/DOW flag.
             if field in (DOM, DOW):
-                kwargs['dom_or_dow_star'] = True
+                flags['dom_or_dow_star'] = True
             # Asterisk means to include all values.
             start, stop = lo, hi
         elif '-' in val:
