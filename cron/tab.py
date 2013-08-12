@@ -153,8 +153,6 @@ def parse_entry(entry):
     return CronTabEntry(entry, fields, command, **kwargs)
 
 
-
-
 def parse_field(expr, field, kwargs={}):
     '''Parse a field from a crontab entry.'''
     lo, hi, names = FIELD_INFO[field]
@@ -172,7 +170,15 @@ def parse_field(expr, field, kwargs={}):
         if '/' in val:
             # Slash changes the step amount.
             val, step = val.split('/')
-            step = int(step)
+            try:
+                step = int(step)
+            except ValueError, e:
+                raise ValueError, expr
+            if step < 1:
+                raise ValueError, 'step value must be greater than zero'
+
+        if not val:
+            raise ValueError, expr
 
         if val == '*':
             # Set the DOM/DOW flag.
@@ -182,7 +188,10 @@ def parse_field(expr, field, kwargs={}):
             start, stop = lo, hi
         elif '-' in val:
             # Dash indicates a range of values.
-            start, stop = map(int, val.split('-'))
+            start, stop = val.split('-')
+            if not start or not stop:
+                raise ValueError, expr
+            start, stop = int(start), int(stop)
         else:
             # Only a single number, not a range.
             val = int(val)
@@ -191,12 +200,18 @@ def parse_field(expr, field, kwargs={}):
             bits[int(val) - lo] = True
             continue
 
+        # Make sure that start is less than stop. Also, make an exception
+        # for Sunday-Sunday, because that makes sense intuitively.
+        if field == DOW and start % 7 == stop % 7:
+            start, stop = 0, 7
+        if start >= stop:
+            raise ValueError, 'start must be less than stop: {!r}'.format(val)
+
         # Set all values in the range.
         for i in range(start, stop + 1, step):
-            try:
-                bits[i - lo] = True
-            except IndexError:
+            if not (lo <= i <= hi):
                 raise ValueError, 'out of range: {}'.format(i)
+            bits[i - lo] = True
 
     # Both 0 and 7 are Sunday.
     if field == DOW and (bits[0] or bits[7]):
