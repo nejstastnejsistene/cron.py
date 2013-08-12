@@ -144,7 +144,7 @@ def parse_entry(entry):
             raise CronTabError, mesg
 
     # The command is whatever is left.
-    command = command.split()
+    command = command.strip()
 
     if len(fields) < len(FIELDS) or not command:
         mesg = 'error parsing entry {!r}'.format(entry)
