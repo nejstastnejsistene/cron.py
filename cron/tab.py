@@ -60,13 +60,16 @@ class CronTabEntry(object):
 
         # Parse the fields.
         for expr, field in zip(entry.split(), FIELDS):
-            entry = entry[len(expr):]
+            entry = entry[len(expr):].lstrip()
             try:
                 bits = self.parse_field(expr.lower(), field)
                 self.fields.append(bits)
             except ValueError:
                 mesg = 'error parsing field: {!r}'.format(expr)
                 raise CronTabError, mesg
+
+        # The command is whatever is left.
+        self.command = entry.strip()
 
     def parse_field(self, expr, field):
         lo, hi, names = FIELD_INFO[field]
