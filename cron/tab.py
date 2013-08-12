@@ -1,3 +1,7 @@
+import calendar
+import datetime
+
+
 FIELDS = MINUTE, HOUR, DOM, MONTH, DOW = range(5)
 
 MONTH_NAMES = 'jan feb mar apr may jun jul aug sep oct nov dec'.split()
@@ -105,3 +109,65 @@ class CronTabEntry(object):
             bits[0] = bits[7] = True
          
         return bits
+
+    def iter_field(self, field):
+        '''Iterate through the matching values for a field.'''
+        lo = FIELD_INFO[field][0]
+        fields = self.fields[field]
+        start = 0
+        for i in range(fields.count(True)):
+            last_index = fields.index(True, start)
+            yield last_index + lo
+            start = last_index + 1
+
+    def next(self):
+        return next(iter(self))
+
+    def __iter__(self):
+        '''Find future datetimes that this entry should be run.'''
+        now = datetime.datetime.now()
+        year = now.year
+        DOM_LO, DOM_HI, _ = FIELD_INFO[DOM]
+        while True:
+            same_year = year == now.year
+            for month in self.iter_field(MONTH):
+                if same_year and month < now.month:
+                    continue
+                same_month = same_year and month == now.month
+
+                # Iterate through all doms, and check later.
+                # See Paul Vixie's comment below.
+                for dom in range(DOM_LO, DOM_HI + 1):
+                    num_days = calendar.monthrange(year, month)[1]
+                    if dom > num_days or same_month and dom < now.day:
+                        continue
+                    same_day = same_year and dom == now.day
+                    for hour in self.iter_field(HOUR):
+                        if same_day and hour < now.hour:
+                            continue
+                        same_hour = same_day and hour == now.hour
+                        for minute in self.iter_field(MINUTE):
+                            if same_hour and minute < now.minute + 1:
+                                continue
+                            dt = datetime.datetime(
+                                    year, month, dom, hour, minute)
+                            dow = dt.isoweekday()
+    # From Paul Vixie's cron:
+    #/* the dom/dow situation is odd.  '* * 1,15 * Sun' will run on the
+    # * first and fifteenth AND every Sunday;  '* * * * Sun' will run *only*
+    # * on Sundays;  '* * 1,15 * *' will run *only* the 1st and 15th.  this
+    # * is why we keep 'e->dow_star' and 'e->dom_star'.  yes, it's bizarre.
+    # * like many bizarre things, it's the standard.
+    # */
+                            valid_dom = dom in list(self.iter_field(DOM))
+                            valid_dow = dow in list(self.iter_field(DOW))
+                            if self.dom_or_dow_star:
+                                valid = valid_dom and valid_dow
+                            else:
+                                valid = valid_dom or valid_dow
+
+                            if valid:
+                                yield dt
+
+            # Try next year.
+            year += 1              
