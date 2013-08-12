@@ -2,12 +2,12 @@
 def assert_raises(exc_cls, func, *args, **kwargs):
     try:
         func(*args, **kwargs)
-    except Exception, exc:
+    except Exception as exc:
         assert isinstance(exc, exc_cls), \
                'raised {!r}, not {}'.format(exc, exc_cls)
     else:
         mesg = 'no exception, expected {}'.format(exc_cls)
-        raise AssertionError, mesg
+        raise AssertionError(mesg)
 
 def test_assert_raises():
     def foo(x, y, z): pass

@@ -124,7 +124,7 @@ def parse_entry(entry):
             entry = entry.replace(token, PREDEFINED[token], 1)
         except KeyError:
             mesg = 'bad time specifier: {!r}'.format(val)
-            raise CronTabError, mesg
+            raise CronTabError(mesg)
 
     fields = []
     command = entry[::]
@@ -138,14 +138,14 @@ def parse_entry(entry):
             fields.append(bits)
         except ValueError:
             mesg = 'error parsing field: {!r}'.format(expr)
-            raise CronTabError, mesg
+            raise CronTabError(mesg)
 
     # The command is whatever is left.
     command = command.strip()
 
     if len(fields) < len(FIELDS) or not command:
         mesg = 'error parsing entry {!r}'.format(entry)
-        raise CronTabError, mesg
+        raise CronTabError(mesg)
 
     return CronTabEntry(entry, fields, command, **kwargs)
 
@@ -154,7 +154,7 @@ def parse_field(expr, field, kwargs={}):
     '''Parse a field from a crontab entry.'''
 
     if not expr:
-        raise ValueError, 'empty expression'
+        raise ValueError('empty expression')
 
     lo, hi, names = FIELD_INFO[field]
     bits = [False for i in range(hi - lo + 1)]
@@ -173,13 +173,13 @@ def parse_field(expr, field, kwargs={}):
             val, step = val.split('/')
             try:
                 step = int(step)
-            except ValueError, e:
-                raise ValueError, expr
+            except ValueError as e:
+                raise ValueError(expr)
             if step < 1:
-                raise ValueError, 'step value must be greater than zero'
+                raise ValueError('step value must be greater than zero')
 
         if not val:
-            raise ValueError, expr
+            raise ValueError(expr)
 
         if val == '*':
             # Set the DOM/DOW flag.
@@ -191,13 +191,13 @@ def parse_field(expr, field, kwargs={}):
             # Dash indicates a range of values.
             start, stop = val.split('-')
             if not start or not stop:
-                raise ValueError, expr
+                raise ValueError(expr)
             start, stop = int(start), int(stop)
         else:
             # Only a single number, not a range.
             val = int(val)
             if not (lo <= val <= hi):
-                raise ValueError, 'out of range: {}'.format(i)
+                raise ValueError('out of range: {}'.format(val))
             bits[int(val) - lo] = True
             continue
 
@@ -206,12 +206,12 @@ def parse_field(expr, field, kwargs={}):
         if field == DOW and start % 7 == stop % 7:
             start, stop = 0, 7
         if start >= stop:
-            raise ValueError, 'start must be less than stop: {!r}'.format(val)
+            raise ValueError('start must be less than stop: {!r}'.format(val))
 
         # Set all values in the range.
         for i in range(start, stop + 1, step):
             if not (lo <= i <= hi):
-                raise ValueError, 'out of range: {}'.format(i)
+                raise ValueError('out of range: {}'.format(i))
             bits[i - lo] = True
 
     # Both 0 and 7 are Sunday.

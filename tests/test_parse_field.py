@@ -1,16 +1,20 @@
 from cron import tab
 from test_helpers import assert_raises
 
+# Make range always return a list, even for Python 3.
+_range = range
+range = lambda *args: list(_range(*args))
+
 
 def assert_bits_match(bits, expected):
     # Assert all the expected are true.
     assert all(map(bits.__getitem__, expected)), bits
     # Use a copy so the original bits can be in the assert message.
-    b = bits[::]
     # Pop in reverse to avoid confusing indices.
-    map(b.pop, sorted(expected, reverse=True))
+    for i in sorted(expected, reverse=True):
+        bits.pop(i)
     # Assert none of the others are true.
-    assert not any(b), bits
+    assert not any(bits), "bits don't match"
 
 
 def test_asserts_bits_match():

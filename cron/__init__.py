@@ -1,1 +1,1 @@
-import tab
+from . import tab
