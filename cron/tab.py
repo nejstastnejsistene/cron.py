@@ -5,7 +5,7 @@ import datetime
 FIELDS = MINUTE, HOUR, DOM, MONTH, DOW = range(5)
 
 MONTH_NAMES = 'jan feb mar apr may jun jul aug sep oct nov dec'.split()
-DOW_NAMES = 'sun mon tue wed thu fre sat sun'.split()
+DOW_NAMES = 'sun mon tue wed thu fri sat sun'.split()
 
 MINUTE_INFO = 0, 59, None
 HOUR_INFO = 0, 23, None
