@@ -44,13 +44,8 @@ class CronTabEntry(object):
         self.dom_or_dow_star = kwargs.get('dom_or_dow_star', False)
         self.when_reboot = kwargs.get('when_reboot', False)
 
-    def iter_field(self, field, cache={}):
+    def iter_field(self, field):
         '''Iterate through the matching values for a field.'''
-        if field not in cache:
-            cache[field] = self._iter_field(field)
-        return cache[field]
-
-    def _iter_field(self, field):
         lo = FIELD_INFO[field][0]
         fields = self.fields[field]
         start = 0

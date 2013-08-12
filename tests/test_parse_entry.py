@@ -75,3 +75,7 @@ def test_hourly():
     assert entry.command == 'cmd'
     assert entry.dom_or_dow_star
     assert not entry.when_reboot
+
+def test_mistakes():
+    assert_raises(tab.CronTabError, tab.parse_entry, '@hourly')
+    assert_raises(tab.CronTabError, tab.parse_entry, '* * * * cmd')
