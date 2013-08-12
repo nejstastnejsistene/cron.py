@@ -27,6 +27,10 @@ PREDEFINED['@annually'] = PREDEFINED['@yearly']
 PREDEFINED['@midnight'] = PREDEFINED['@daily']
 
 
+class CronTabError(Exception):
+    pass
+
+
 class CronTab(object):
     pass
 
@@ -151,7 +155,7 @@ def parse_entry(entry):
 
 
 
-def parse_field(expr, field, kwargs):
+def parse_field(expr, field, kwargs={}):
     '''Parse a field from a crontab entry.'''
     lo, hi, names = FIELD_INFO[field]
     bits = [False for i in range(hi - lo + 1)]
@@ -178,15 +182,21 @@ def parse_field(expr, field, kwargs):
             start, stop = lo, hi
         elif '-' in val:
             # Dash indicates a range of values.
-            start, stop = map(int, v.split('-'))
+            start, stop = map(int, val.split('-'))
         else:
             # Only a single number, not a range.
+            val = int(val)
+            if not (lo <= val <= hi):
+                raise ValueError, 'out of range: {}'.format(i)
             bits[int(val) - lo] = True
             continue
 
         # Set all values in the range.
         for i in range(start, stop + 1, step):
-            bits[i - lo] = True
+            try:
+                bits[i - lo] = True
+            except IndexError:
+                raise ValueError, 'out of range: {}'.format(i)
 
     # Both 0 and 7 are Sunday.
     if field == DOW and (bits[0] or bits[7]):
