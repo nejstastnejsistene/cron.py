@@ -81,9 +81,13 @@ def test_mistakes():
     assert_raises(tab.CronTabError, tab.parse_entry, '* * * * cmd')
 
 def test_python_commands():
-    cmd = lambda: None
-    entry = tab.parse_entry('* * * * *', cmd)
-    assert entry.command == cmd
+    cmd = lambda x: x
+    entry = tab.parse_entry('* * * * *', cmd, 123)
+    assert entry.command[0] == cmd
+    assert entry() == 123
+    tab.parse_entry('* * * * * ls')()
+    entry = tab.parse_entry('* * * * * grep') # Should fail.
+    assert_raises(tab.CronTabError, entry)
     assert_raises(tab.CronTabError, tab.parse_entry, '* * * * *')
     assert_raises(tab.CronTabError, tab.parse_entry, '* * * * * cmd', cmd)
 

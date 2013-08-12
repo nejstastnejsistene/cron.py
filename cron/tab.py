@@ -1,5 +1,7 @@
 import calendar
 import datetime
+import os
+import subprocess
 
 
 FIELDS = MINUTE, HOUR, DOM, MONTH, DOW = range(5)
@@ -43,6 +45,15 @@ class CronTabEntry(object):
         self.command = command
         self.dom_or_dow_star = flags.get('dom_or_dow_star', False)
         self.when_reboot = flags.get('when_reboot', False)
+
+    def __call__(self):
+        if isinstance(self.command, tuple):
+            func, args, kwargs = self.command
+            return func(*args, **kwargs)
+        else:
+            with open(os.devnull, 'w') as f:
+                if subprocess.call(self.command.split(), stdout=f, stderr=f):
+                    raise CronTabError('non-zero return code')
 
     def iter_field(self, field):
         '''Iterate through the matching values for a field.'''
@@ -117,7 +128,7 @@ def parse_entry(entry, command=None, *args, **kwargs):
     # Reboot is a special case.
     if entry.lower().startswith('@reboot'):
         cmd = entry[7:].lstrip()
-        command = get_command(entry[7:], command)
+        command = get_command(entry[7:], command, args, kwargs)
         return CronTabEntry(entry, None, command, when_reboot=True)
 
     # Replace predefined time specifiers.
@@ -144,7 +155,7 @@ def parse_entry(entry, command=None, *args, **kwargs):
             mesg = 'error parsing field: {!r}'.format(expr)
             raise CronTabError(mesg)
 
-    command = get_command(cmd, command)
+    command = get_command(cmd, command, args, kwargs)
 
     if len(fields) < len(FIELDS):
         mesg = 'error parsing entry {!r}'.format(entry)
@@ -153,7 +164,7 @@ def parse_entry(entry, command=None, *args, **kwargs):
     return CronTabEntry(entry, fields, command, **flags)
 
 
-def get_command(cmd, func):
+def get_command(cmd, func, args, kwargs):
     '''Determine an entry's command.
 
        Arguments are a the remainder of an entry, and an optional
@@ -164,7 +175,7 @@ def get_command(cmd, func):
     if cmd and func is None:
         return cmd
     elif not cmd and func is not None:
-        return func
+        return func, args, kwargs
 
     if cmd:
         raise CronTabError('found command where none was expected')
