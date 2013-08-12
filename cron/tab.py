@@ -114,9 +114,11 @@ class CronTabEntry(object):
 def parse_entry(entry):
     '''Parse a single crontab entry.'''
 
+    entry = entry.strip()
+
     # Reboot is a special case.
     if entry.lower().startswith('@reboot'):
-        command = self.entry[7:].lstrip()
+        command = entry[7:].lstrip()
         return CronTabEntry(entry, None, command, when_reboot=True)
 
     # Replace predefined time specifiers.
@@ -155,6 +157,10 @@ def parse_entry(entry):
 
 def parse_field(expr, field, kwargs={}):
     '''Parse a field from a crontab entry.'''
+
+    if not expr:
+        raise ValueError, 'empty expression'
+
     lo, hi, names = FIELD_INFO[field]
     bits = [False for i in range(hi - lo + 1)]
 

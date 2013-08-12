@@ -1,15 +1,5 @@
 from cron import tab
-
-
-def assert_raises(exc_cls, func, *args, **kwargs):
-    try:
-        func(*args, **kwargs)
-    except Exception, exc:
-        assert isinstance(exc, exc_cls), \
-               'raised {!r}, not {}'.format(exc, exc_cls)
-    else:
-        mesg = 'no exception, expected {}'.format(exc_cls)
-        raise AssertionError, mesg
+from test_helpers import assert_raises
 
 
 def assert_bits_match(bits, expected):
@@ -22,22 +12,6 @@ def assert_bits_match(bits, expected):
     # Assert none of the others are true.
     assert not any(b), bits
 
-
-def test_assert_raises():
-    def foo(x, y, z): pass
-    def bar(x, y, z): raise ValueError
-    # Raises nothing.
-    try:
-        assert_raises(Exception, foo, 1, 2, 3)
-    except AssertionError as e:
-        assert isinstance(e, AssertionError), 'expecting failed assertion'
-    # Raises correct exception.
-    assert_raises(ValueError, bar, 1, 2, z=3)
-    # Raises incorrect exception.
-    try:
-        assert_raises(IOError, bar, 1, 2, 3)
-    except AssertionError as e:
-        assert isinstance(e, AssertionError), 'expecting failed assertion'
 
 def test_asserts_bits_match():
     assert_bits_match([True, False, True, False], [0, 2])
@@ -207,6 +181,7 @@ def test_out_of_range_errors():
     tab.parse_field('sun-sun', tab.DOW)
 
 def test_badly_formatted_fields():
+    assert_raises(ValueError, tab.parse_field, '', tab.MINUTE)
     assert_raises(ValueError, tab.parse_field, '0-', tab.MINUTE)
     assert_raises(ValueError, tab.parse_field, '-59', tab.MINUTE)
     assert_raises(ValueError, tab.parse_field, '*/', tab.MINUTE)
