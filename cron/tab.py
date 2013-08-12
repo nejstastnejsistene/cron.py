@@ -16,8 +16,8 @@ DOW_INFO = 0, 7, DOW_NAMES
 FIELD_INFO = MINUTE_INFO, HOUR_INFO, DOM_INFO, MONTH_INFO, DOW_INFO
 
 PREDEFINED = {
-    '@yearly':  '0 0 0 0 *',
-    '@monthly': '0 0 0 * *',
+    '@yearly':  '0 0 1 1 *',
+    '@monthly': '0 0 1 * *',
     '@weekly':  '0 0 * * 0',
     '@daily':   '0 0 * * *',
     '@hourly':  '0 * * * *',
@@ -89,7 +89,7 @@ class CronTabEntry(object):
             if val == '*':
                 # Set the DOM/DOW flag.
                 if field in (DOM, DOW):
-                    self.dom_or_dow_start = True
+                    self.dom_or_dow_star = True
                 # Asterisk means to include all values.
                 start, stop = lo, hi
             elif '-' in val:
@@ -134,11 +134,10 @@ class CronTabEntry(object):
                 if same_year and month < now.month:
                     continue
                 same_month = same_year and month == now.month
-
+                num_days = calendar.monthrange(year, month)[1]
                 # Iterate through all doms, and check later.
                 # See Paul Vixie's comment below.
                 for dom in range(DOM_LO, DOM_HI + 1):
-                    num_days = calendar.monthrange(year, month)[1]
                     if dom > num_days or same_month and dom < now.day:
                         continue
                     same_day = same_year and dom == now.day
