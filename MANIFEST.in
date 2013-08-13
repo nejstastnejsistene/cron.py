@@ -1,0 +1,2 @@
+include README.md LICENSE version.txt
+recursive-exclude *.py[co] __pycach__/*
