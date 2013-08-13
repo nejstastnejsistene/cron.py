@@ -63,6 +63,8 @@ class CronTabEntry(object):
                     raise CronTabError('non-zero return code')
 
     def should_run(self, dt):
+        if self.when_reboot:
+            return False
         dom = self.matches_field(DOM, dt.day)
         dow = self.matches_field(DOW, dt.isoweekday())
         return self.matches_field(MINUTE, dt.minute) and \

@@ -24,12 +24,18 @@ class Cron(object):
 
     def main(self):
         self.stopped = False
+        for entry in self.entries:
+            if entry.when_reboot:
+                self.run_entry(entry)
         while not self.stopped:
             self.do_sleep()
             now = datetime.datetime.now()
             for entry in self.entries:
                 if entry.should_run(now):
-                    threading.Thread(target=entry, name=entry.name()).start()
+                    self.run_entry(entry)
+
+    def run_entry(self, entry):
+        threading.Thread(target=entry, name=entry.name()).start()
 
     def do_sleep(self):
         now = int(time.time())
