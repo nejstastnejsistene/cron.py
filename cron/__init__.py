@@ -26,14 +26,9 @@ class Cron(object):
         self.stopped = False
         while not self.stopped:
             self.do_sleep()
-            dt = datetime.datetime.now()
+            now = datetime.datetime.now()
             for entry in self.entries:
-                next_dt = next(entry)
-                if dt.year == next_dt.year and \
-                        dt.month == next_dt.month and \
-                        dt.day == next_dt.day and \
-                        dt.hour == next_dt.hour and \
-                        dt.minute == next_dt.minute - 1:
+                if entry.should_run(now):
                     threading.Thread(target=entry).start()
 
     def do_sleep(self):

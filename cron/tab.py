@@ -55,6 +55,18 @@ class CronTabEntry(object):
                 if subprocess.call(self.command.split(), stdout=f, stderr=f):
                     raise CronTabError('non-zero return code')
 
+    def should_run(self, dt):
+        dom = self.matches_field(DOM, dt.day)
+        dow = self.matches_field(DOW, dt.isoweekday())
+        return self.matches_field(MINUTE, dt.minute) and \
+                self.matches_field(HOUR, dt.hour) and \
+                self.matches_field(MONTH, dt.month) and \
+                (dom and dow) if self.dom_or_dow_star else (dom or dow)
+
+    def matches_field(self, field, value):
+        lo = FIELD_INFO[field][0]
+        return self.fields[field][value - lo]
+
     def iter_field(self, field):
         '''Iterate through the matching values for a field.'''
         lo = FIELD_INFO[field][0]
