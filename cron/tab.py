@@ -46,6 +46,13 @@ class CronTabEntry(object):
         self.dom_or_dow_star = flags.get('dom_or_dow_star', False)
         self.when_reboot = flags.get('when_reboot', False)
 
+    def name(self):
+        if isinstance(self.command, tuple):
+            # Return the name of the python function.
+            return self.command[0].__name__
+        else:
+            return self.command
+
     def __call__(self):
         if isinstance(self.command, tuple):
             func, args, kwargs = self.command

@@ -29,7 +29,7 @@ class Cron(object):
             now = datetime.datetime.now()
             for entry in self.entries:
                 if entry.should_run(now):
-                    threading.Thread(target=entry).start()
+                    threading.Thread(target=entry, name=entry.name()).start()
 
     def do_sleep(self):
         now = int(time.time())
