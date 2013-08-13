@@ -67,6 +67,7 @@ class CronTabEntry(object):
 
     def next(self):
         return next(iter(self))
+    __next__ = next
 
     def __iter__(self):
         '''Find future datetimes that this entry should be run.'''
