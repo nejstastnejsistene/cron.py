@@ -9,7 +9,7 @@ To install from PyPI:
 
     pip install cron.py
 
-Or, if you prefer to build from source:
+Or, if you prefer to build install from source:
 
     git clone git@github.com:nejstastnejsistene/cron.py.git
     cd cron.py
@@ -25,13 +25,13 @@ def foo(x, y, z):
 
 daemon = cron.Cron()
 daemon.add('@weekly shell_command')
-daemon.add('*/30 * * * *', foo, 1, 2, z=3)
+daemon.add('*/30 * * * *', foo, 1, 2, 3)
 daemon.start()
 
 # The next few times these command will run.
 for entry in daemon.entries:
     for _, dt in zip(range(3), entry):
-        print datetime.datetime.stftime(dt, '%c'), entry.command
+        print dt.strftime('%c'), entry.command
 # Sun Aug 18 00:00:00 2013 shell_command
 # Sun Aug 25 00:00:00 2013 shell_command
 # Sun Sep  1 00:00:00 2013 shell_command
